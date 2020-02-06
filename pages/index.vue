@@ -70,11 +70,14 @@ export default {
 <style lang="scss" scoped>
 .ice-cream-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 4px;
   margin: 4px;
 
   .ice-cream-item {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     padding: 24px 12px 12px 12px;
     border-radius: 3px;
     box-shadow: -2px 2px 3px rgba(0, 0, 0, 0.2);
