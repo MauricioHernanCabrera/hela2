@@ -34,7 +34,7 @@ export default {
   /*
    ** Plugins to load before mounting the App
    */
-  plugins: ["@/plugins/vue-composition-api"],
+  plugins: ["@/plugins/vue-composition-api", "@/plugins/init-state"],
   /*
    ** Nuxt.js dev-modules
    */
@@ -45,7 +45,8 @@ export default {
   modules: [
     // Doc: https://axios.nuxtjs.org/usage
     "@nuxtjs/axios",
-    "@nuxtjs/pwa"
+    "@nuxtjs/pwa",
+    "cookie-universal-nuxt"
   ],
   /*
    ** Axios module configuration

@@ -1,80 +1,91 @@
 <template lang="pug">
-  ul.cart
-    li.cart-item( v-for="(item, indexProduct) in cart" :key="cart._id")
-      .header(@click="item.showTastes = !item.showTastes")
-        .left
-          .aspect-ratio.aspect-ratio-1by1
-            img.aspect-ratio-item(:src="item.img")
+  div
+    span.empty-cart(v-if="cart.length == 0") No hay helados agregados al carrito :(
+    ul.cart(v-else)
+      li.cart-item( v-for="(item, indexProduct) in cart" :key="cart.id")
+        .header(@click="item.showCreamList = !item.showCreamList")
+          .left
+            .aspect-ratio.aspect-ratio-1by1
+              img.aspect-ratio-item(:src="item.img")
 
-        .right
-          h2 {{ item.name }}
-          span 3 helado (s)
-          button x
+          .right
+            h2 {{ item.name }}
+            span {{ item.people.length }} helado (s) - {{ Math.floor(item.people.length / 2) }} promo (s)
+            button(@click="deleteProduct({ indexProduct })") x
+        
+        .content(v-show="item.showCreamList")
+          .cream-list
+            cream(
+              :cream="creamList[0]"
+              :indexProduct="indexProduct"
+              :people="item.people.filter((person) => person.creamId == 1)"
+              @deletePerson="deletePerson"
+              @changeTasteSelected="changeTasteSelected"
+              @changeStatus="changeStatus"
+              @addPerson="addPerson"
+            )
+
+            cream(
+              :cream="creamList[1]"
+              :indexProduct="indexProduct"
+              :people="item.people.filter((person) => person.creamId == 2)"
+              @deletePerson="deletePerson"
+              @changeTasteSelected="changeTasteSelected"
+              @changeStatus="changeStatus"
+              @addPerson="addPerson"
+            )
+    
+    
+    footer
+      span Total: 
+        b ${{calculateTotal}}
       
-      .content(v-show="item.showTastes")
-        ul.cream-list
-          li.cream-item(v-for="(taste, indexTaste) in tastes" :key="taste._id")
-            .cream
-              .left
-                .aspect-ratio.aspect-ratio-1by1
-                  img.aspect-ratio-item(:src="taste.img")
-              .right
-                h3 {{ taste.name }}
-            
-            ul.people
-              li.empty No hay personas
-              li.people-item(v-for="(person, indexPerson) in item.people" :key="indexPerson" v-if="person.tasteId == taste._id")
-                button.delete-people(@click="deletePerson({ indexProduct, indexPerson })") x
-                input.input-name(v-model="person.name")
-                input.input-pay(type="checkbox" v-model="person.active")
-
-            .actions
-              button(@click="addPerson({indexProduct, tasteId: taste._id})") Agregar persona
+      div.warning(v-if="hasWarning.length")
+        h5 Advertencia
+        ul
+          li(v-for="item in hasWarning" :key="item.id") 
+            | Falta un 
+            b {{ item.name }} 
+            | para otra promo
+    
+    .modal(v-if="modal.active")
+      .content
+        p.description(v-html="modal.description")
+        .actions
+          button.close(@click="modal.active = false") cancelar
+          button.accept(@click="modal.submit") aceptar
 </template>
 
 <script>
 import { mapMutations, mapState } from "vuex";
-
+import Cream from "@/components/Cream.vue";
 export default {
+  components: {
+    Cream
+  },
+
   data() {
     return {
-      cart: [
+      cart: JSON.parse(JSON.stringify(this.$store.state.cart.cart)),
+
+      creamList: [
         {
-          _id: 1,
-          name: "Mc Flurry - Oreo",
-          img: "/images/mc_flurry_oreo.png",
-          showTastes: false,
-          people: []
+          id: 1,
+          name: "Dulce de leche",
+          showPeople: false
         },
         {
-          _id: 2,
-          name: "Sundae",
-          img: "/images/sundae.png",
-          showTastes: false,
-          people: []
+          id: 2,
+          name: "Vainilla",
+          showPeople: false
         }
       ],
 
-      tastes: [
-        {
-          _id: 1,
-          name: "Chocolate",
-          img: "/images/chocolate.png",
-          showPeople: false
-        },
-        {
-          _id: 2,
-          name: "Dulce de leche",
-          img: "/images/dulce_de_leche.png",
-          showPeople: false
-        },
-        {
-          _id: 3,
-          name: "Frutilla",
-          img: "/images/frutilla.png",
-          showPeople: false
-        }
-      ]
+      modal: {
+        active: false,
+        description: "",
+        submit: () => {}
+      }
     };
   },
 
@@ -82,33 +93,134 @@ export default {
     this.SET_TITLE("Ice cart");
   },
 
+  watch: {
+    cart: {
+      handler(val) {
+        this.SET_CART(JSON.parse(JSON.stringify(this.cart)));
+      },
+      deep: true
+    }
+  },
+
   methods: {
     ...mapMutations(["SET_TITLE"]),
-    addPerson({ indexProduct, tasteId }) {
+    ...mapMutations("cart", ["SET_CART"]),
+
+    addPerson({ indexProduct, creamId }) {
       this.cart[indexProduct].people.push({
         name: "",
         active: false,
-        tasteId
+        creamId,
+        tasteId: 1,
+        status: "nada", // [nada, pedido, entregado]
+        id: Date.now()
       });
     },
 
-    deletePerson({ indexProduct, indexPerson }) {
-      this.cart[indexProduct].people.splice(indexPerson, 1);
+    getIndexPerson({ indexProduct, personId }) {
+      return this.cart[indexProduct].people.findIndex(
+        person => person.id == personId
+      );
+    },
+
+    deletePerson({ indexProduct, personId }) {
+      const indexPerson = this.getIndexPerson({ indexProduct, personId });
+
+      this.modal.active = true;
+      this.modal.description = `Seguro que deseas eliminar a la persona: <b>${this.cart[indexProduct].people[indexPerson].name}</b>?`;
+      this.modal.submit = () => {
+        this.cart[indexProduct].people.splice(indexPerson, 1);
+        this.modal.active = false;
+      };
+    },
+
+    changeTasteSelected({ indexProduct, personId }) {
+      const indexPerson = this.getIndexPerson({ indexProduct, personId });
+
+      if (
+        this.cart[indexProduct].people[indexPerson].tasteId ==
+        this.tasteList.length - 1
+      ) {
+        this.cart[indexProduct].people[indexPerson].tasteId = 0;
+      } else {
+        this.cart[indexProduct].people[indexPerson].tasteId++;
+      }
+    },
+
+    changeStatus({ indexProduct, personId }) {
+      const indexPerson = this.getIndexPerson({ indexProduct, personId });
+
+      const { status } = this.cart[indexProduct].people[indexPerson];
+
+      let newStatus = "";
+      switch (status) {
+        case "nada": {
+          newStatus = "pedido";
+          break;
+        }
+        case "pedido": {
+          newStatus = "entregado";
+          break;
+        }
+        case "entregado": {
+          newStatus = "nada";
+          break;
+        }
+      }
+
+      this.cart[indexProduct].people[indexPerson].status = newStatus;
+    },
+
+    deleteProduct({ indexProduct }) {
+      this.modal.active = true;
+
+      this.modal.description = `Seguro que deseas eliminar el producto: <b>${this.cart[indexProduct].name}</b>?`;
+      this.modal.submit = () => {
+        this.cart.splice(indexProduct, 1);
+        this.modal.active = false;
+      };
+    }
+  },
+
+  computed: {
+    ...mapState(["tasteList"]),
+
+    calculateTotal() {
+      return this.cart.reduce((ant, act) => {
+        const promos = Math.floor(act.people.length / 2) * act.promo;
+        let total = promos;
+
+        const hasOnePersonWithoutPromo = act.people.length % 2;
+        if (hasOnePersonWithoutPromo) total += act.price;
+
+        return ant + total;
+      }, 0);
+    },
+
+    hasWarning() {
+      return (
+        this.cart.filter(item => {
+          const hasOnePersonWithoutPromo = item.people.length % 2;
+          return hasOnePersonWithoutPromo;
+        }) || []
+      );
     }
   }
-
-  // computed: {
-  //   ...mapState("cart", ["cart"])
-  // }
 };
 </script>
 
 <style lang="scss" scoped>
+.empty-cart {
+  padding: 10px;
+  display: block;
+  font-size: 12px;
+}
 .cart {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 8px;
   margin: 4px;
+  margin-bottom: 137px;
 
   .cart-item {
     position: relative;
@@ -144,88 +256,91 @@ export default {
 
         button {
           position: absolute;
-          top: 12px;
-          right: 8px;
+          top: 4px;
+          right: 4px;
+          padding: 4px;
+          cursor: pointer;
         }
       }
     }
 
     .content {
-      padding: 12px 8px;
       background: #f6f6f6;
-
       .cream-list {
         display: grid;
         grid-template-columns: 1fr;
         gap: 8px;
+      }
+    }
+  }
+}
 
-        .cream-item {
-          background: white;
-          padding: 8px;
-          border-radius: 3px;
+footer {
+  position: fixed;
+  bottom: 0;
+  width: 100%;
+  border-top: 1px solid #ccc;
+  background: white;
 
-          .cream {
-            display: flex;
-            align-items: center;
-            padding-bottom: 8px;
-            .left {
-              flex: 0 0 32px;
-              margin-right: 6px;
-            }
-            .right {
-              h3 {
-                font-size: 12px;
-              }
-            }
-          }
+  span {
+    padding: 16px 8px;
+    display: block;
+  }
 
-          .people {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 8px;
-            margin-top: 8px;
-            margin-bottom: 16px;
-            .empty {
-              font-size: 12px;
-              text-align: center;
-            }
+  .warning {
+    background-color: #efd83e;
+    padding: 16px 8px;
+    h5 {
+      margin: 0;
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    ul {
+      list-style-type: circle;
+      padding-left: 18px;
+      li {
+        font-size: 12px;
+      }
+    }
+  }
+}
 
-            .people-item {
-              display: flex;
-              align-items: center;
-              button {
-                flex: 0 0 32px;
-                cursor: pointer;
-              }
-              .input-name {
-                border: 0;
-                border-bottom: 1px solid #ccc;
-                flex-grow: 1;
-                margin-right: 12px;
-                padding: 8px 0;
-              }
-              .input-pay {
-                /* transform: scale(2); */
-                display: block;
-                margin: 0;
-                margin-right: 6px;
-              }
-            }
-          }
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
 
-          .actions {
-            button {
-              width: 100%;
-              border-radius: 3px;
-              color: white;
-              padding: 8px 0;
-              font-size: 12px;
-              letter-spacing: 0;
-              background-color: #6fbe6d;
-              cursor: pointer;
-              display: block;
-            }
-          }
+  .content {
+    max-width: 350px;
+    background: white;
+    padding: 32px;
+    border-radius: 3px;
+    .description {
+      margin-bottom: 32px;
+    }
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      button {
+        cursor: pointer;
+        padding: 5px 10px;
+        border-width: 2px;
+        border-style: solid;
+
+        &.close {
+          border-color: #ccc;
+        }
+        &.accept {
+          border-color: #6fbe6d;
+          background: #6fbe6d;
+          color: white;
         }
       }
     }

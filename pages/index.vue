@@ -1,6 +1,6 @@
 <template lang="pug">
   ul.ice-cream-list
-    li(class="ice-cream-item" v-for="item in iceCreamListF" :key="item._id")
+    li(class="ice-cream-item" v-for="item in iceCreamListF" :key="item.id")
       .container-img
         .aspect-ratio.aspect-ratio-1by1
           img.aspect-ratio-item(:src="item.img")
@@ -22,14 +22,22 @@ export default {
     return {
       iceCreamList: [
         {
-          _id: 1,
+          id: 1,
           name: "Mc Flurry - Oreo",
-          img: "/images/mc_flurry_oreo.png"
+          img: "/images/mc_flurry_oreo.png",
+          showCreamList: false,
+          price: 135,
+          promo: 190,
+          people: []
         },
         {
-          _id: 2,
+          id: 2,
           name: "Sundae",
-          img: "/images/sundae.png"
+          img: "/images/sundae.png",
+          showCreamList: false,
+          price: 105,
+          promo: 105,
+          people: []
         }
       ]
     };
@@ -49,7 +57,7 @@ export default {
     iceCreamListF() {
       return this.iceCreamList.map(iceCream => ({
         ...iceCream,
-        isExist: this.cart.some(product => product._id == iceCream._id)
+        isExist: this.cart.some(product => product.id == iceCream.id)
       }));
     }
   }
