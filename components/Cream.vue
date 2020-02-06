@@ -13,7 +13,7 @@
           button.delete-people(@click="$emit('deletePerson', { indexProduct, personId: person.id })") x
           .input-taste(@click="$emit('changeTasteSelected', { indexProduct, personId: person.id })")
             .aspect-ratio.aspect-ratio-1by1()
-              img.aspect-ratio-item(:src="tasteList[person.tasteId].img")
+              img.aspect-ratio-item(:src="BASE_URL + tasteList[person.tasteId].img")
           input.input-name(v-model="person.name")
           .input-pay(@click="$emit('changeStatus', { indexProduct, personId: person.id }) " :class="[person.status]")
           
@@ -43,6 +43,7 @@ export default {
 
   data() {
     return {
+      BASE_URL: process.env.BASE_URL,
       showMore: true
     };
   },

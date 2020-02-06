@@ -26,6 +26,10 @@ const page = {
 export default {
   ...routerBase,
 
+  env: {
+    BASE_URL
+  },
+
   mode: "universal",
   /*
    ** Headers of the page

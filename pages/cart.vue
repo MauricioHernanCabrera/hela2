@@ -6,7 +6,7 @@
         .header(@click="item.showCreamList = !item.showCreamList")
           .left
             .aspect-ratio.aspect-ratio-1by1
-              img.aspect-ratio-item(:src="item.img")
+              img.aspect-ratio-item(:src="BASE_URL + item.img")
 
           .right
             h2 {{ item.name }}
@@ -66,7 +66,8 @@ export default {
 
   data() {
     return {
-      cart: JSON.parse(JSON.stringify(this.$store.state.cart.cart)),
+      BASE_URL: process.env.BASE_URL,
+      cart: [],
 
       creamList: [
         {
@@ -90,6 +91,7 @@ export default {
   },
 
   mounted() {
+    this.cart = JSON.parse(JSON.stringify(this.$store.state.cart.cart));
     this.SET_TITLE("Ice cart");
   },
 

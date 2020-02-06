@@ -3,14 +3,14 @@
     li(class="ice-cream-item" v-for="item in iceCreamListF" :key="item.id")
       .container-img
         .aspect-ratio.aspect-ratio-1by1
-          img.aspect-ratio-item(:src="item.img")
+          img.aspect-ratio-item(:src="BASE_URL + item.img")
       
       .content
         h3 {{ item.name }}
 
       .actions
-        button(v-if="!item.isExist" @click="ADD_TO_CART(item)") Agregar hela2
-        span(v-else) Ya esta en el carro!
+        button(v-show="!item.isExist" @click="ADD_TO_CART(item)") Agregar hela2
+        span(v-show="item.isExist") Ya esta en el carro!
 
 </template>
 
@@ -20,6 +20,7 @@ import { mapMutations, mapState } from "vuex";
 export default {
   data() {
     return {
+      BASE_URL: process.env.BASE_URL,
       iceCreamList: [
         {
           id: 1,
@@ -28,7 +29,8 @@ export default {
           showCreamList: false,
           price: 135,
           promo: 190,
-          people: []
+          people: [],
+          isExist: false
         },
         {
           id: 2,
@@ -37,7 +39,8 @@ export default {
           showCreamList: false,
           price: 105,
           promo: 105,
-          people: []
+          people: [],
+          isExist: false
         }
       ]
     };
