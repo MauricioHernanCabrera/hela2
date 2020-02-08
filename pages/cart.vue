@@ -10,12 +10,15 @@
 
           .right
             h2 {{ item.name }}
-            span {{ item.people.length }} helado (s) - {{ Math.floor(item.people.length / 2) }} promo (s)
+            p 
+              | {{ item.people.length }} helado (s)
+              span(v-if="item.promo")  - {{ Math.floor(item.people.length / item.promo.personLength) }} promo (s)
+
             button(@click="deleteProduct({ indexProduct })") x
         
         .content(v-show="item.showCreamList")
           .cream-list
-            cream(
+            h2-cream(
               :cream="creamList[0]"
               :indexProduct="indexProduct"
               :people="item.people.filter((person) => person.creamId == 1)"
@@ -23,9 +26,10 @@
               @changeTasteSelected="changeTasteSelected"
               @changeStatus="changeStatus"
               @addPerson="addPerson"
+              @changeName="changeName"
             )
 
-            cream(
+            h2-cream(
               :cream="creamList[1]"
               :indexProduct="indexProduct"
               :people="item.people.filter((person) => person.creamId == 2)"
@@ -37,7 +41,7 @@
     
     
     footer
-      span Total: 
+      span.total Total: 
         b ${{calculateTotal}}
       
       div.warning(v-if="hasWarning.length")
@@ -58,15 +62,19 @@
 
 <script>
 import { mapMutations, mapState } from "vuex";
-import Cream from "@/components/Cream.vue";
+import H2Cream from "@/components/Cream.vue";
+
 export default {
+  name: "CartPage",
+
   components: {
-    Cream
+    H2Cream
   },
 
   data() {
     return {
       BASE_URL: process.env.BASE_URL,
+
       cart: [],
 
       creamList: [
@@ -121,7 +129,7 @@ export default {
 
     getIndexPerson({ indexProduct, personId }) {
       return this.cart[indexProduct].people.findIndex(
-        person => person.id == personId
+        ({ id }) => id == personId
       );
     },
 
@@ -137,16 +145,23 @@ export default {
     },
 
     changeTasteSelected({ indexProduct, personId }) {
-      const indexPerson = this.getIndexPerson({ indexProduct, personId });
+      this.modal.active = true;
+      this.modal.description = `Seguro que deseas cambiar el sabor del hela2: <b>${this.cart[indexProduct].name}</b>?`;
 
-      if (
-        this.cart[indexProduct].people[indexPerson].tasteId ==
-        this.tasteList.length - 1
-      ) {
-        this.cart[indexProduct].people[indexPerson].tasteId = 0;
-      } else {
-        this.cart[indexProduct].people[indexPerson].tasteId++;
-      }
+      this.modal.submit = () => {
+        const indexPerson = this.getIndexPerson({ indexProduct, personId });
+
+        if (
+          this.cart[indexProduct].people[indexPerson].tasteId ==
+          this.tasteList.length - 1
+        ) {
+          this.cart[indexProduct].people[indexPerson].tasteId = 0;
+        } else {
+          this.cart[indexProduct].people[indexPerson].tasteId++;
+        }
+
+        this.modal.active = false;
+      };
     },
 
     changeStatus({ indexProduct, personId }) {
@@ -173,6 +188,15 @@ export default {
       this.cart[indexProduct].people[indexPerson].status = newStatus;
     },
 
+    changeName({ indexProduct, personId, value }) {
+      console.log({ indexProduct, personId, value });
+      const indexPerson = this.getIndexPerson({ indexProduct, personId });
+
+      const { status } = (this.cart[indexProduct].people[
+        indexPerson
+      ].name = value);
+    },
+
     deleteProduct({ indexProduct }) {
       this.modal.active = true;
 
@@ -188,24 +212,34 @@ export default {
     ...mapState(["tasteList"]),
 
     calculateTotal() {
-      return this.cart.reduce((ant, act) => {
-        const promos = Math.floor(act.people.length / 2) * act.promo;
-        let total = promos;
+      return this.cart.reduce((ant, { people, promo, price }) => {
+        let total = 0;
 
-        const hasOnePersonWithoutPromo = act.people.length % 2;
-        if (hasOnePersonWithoutPromo) total += act.price;
+        if (promo) {
+          const priceWithPromo =
+            Math.floor(people.length / promo.personLength) * promo.price;
+          total += priceWithPromo;
+
+          const hasOnePersonWithoutPromo = people.length % promo.personLength;
+          if (hasOnePersonWithoutPromo) total += price;
+        } else {
+          const priceWithoutPromo = people.length * price;
+          total += priceWithoutPromo;
+        }
 
         return ant + total;
       }, 0);
     },
 
     hasWarning() {
-      return (
-        this.cart.filter(item => {
-          const hasOnePersonWithoutPromo = item.people.length % 2;
+      return this.cart.filter(({ people, promo = null }) => {
+        if (promo) {
+          const hasOnePersonWithoutPromo = people.length % promo.personLength;
           return hasOnePersonWithoutPromo;
-        }) || []
-      );
+        } else {
+          return false;
+        }
+      });
     }
   }
 };
@@ -251,9 +285,9 @@ export default {
           margin: 0;
         }
 
-        span {
-          display: block;
+        p {
           font-size: 10px;
+          margin: 0;
         }
 
         button {
@@ -284,9 +318,10 @@ footer {
   border-top: 1px solid #ccc;
   background: white;
 
-  span {
+  .total {
     padding: 16px 8px;
-    display: block;
+    display: flex;
+    justify-content: space-between;
   }
 
   .warning {
@@ -322,16 +357,19 @@ footer {
   .content {
     max-width: 350px;
     background: white;
+    margin: 0 20px;
     padding: 32px;
     border-radius: 3px;
     .description {
       margin-bottom: 32px;
     }
+
     .actions {
       display: flex;
       justify-content: space-between;
       button {
         cursor: pointer;
+        flex: 0 0 calc(50% - 5px);
         padding: 5px 10px;
         border-width: 2px;
         border-style: solid;

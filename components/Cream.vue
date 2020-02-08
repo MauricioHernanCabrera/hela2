@@ -9,23 +9,28 @@
       .people()
         .empty(v-if="people.length == 0") No hay personas
         
-        .people-item(v-else v-for="person in sortPeopleByTaste" :key="person.id")
-          button.delete-people(@click="$emit('deletePerson', { indexProduct, personId: person.id })") x
-          .input-taste(@click="$emit('changeTasteSelected', { indexProduct, personId: person.id })")
-            .aspect-ratio.aspect-ratio-1by1()
-              img.aspect-ratio-item(:src="BASE_URL + tasteList[person.tasteId].img")
-          input.input-name(v-model="person.name")
-          .input-pay(@click="$emit('changeStatus', { indexProduct, personId: person.id }) " :class="[person.status]")
-          
+        H2Person(
+          v-else
+          v-for="person in sortPeopleByTaste" :key="person.id"
+          @deletePerson="({ personId }) => $emit('deletePerson', { indexProduct, personId })"
+          @changeTasteSelected="({ personId }) => $emit('changeTasteSelected', { indexProduct, personId })"
+          @changeStatus="({ personId }) => $emit('changeStatus', { indexProduct, personId })"
+          @changeName="({ value, personId }) => $emit('changeName', { indexProduct, personId, value })"
+          :person="person"
+        )
 
       .actions()
         button(@click="$emit('addPerson', {indexProduct, creamId: cream.id})") Agregar persona
+
 </template>
 
 <script>
 import { mapState } from "vuex";
-
+import H2Person from "@/components/Person";
 export default {
+  components: {
+    H2Person
+  },
   props: {
     cream: {
       type: Object,
@@ -43,7 +48,6 @@ export default {
 
   data() {
     return {
-      BASE_URL: process.env.BASE_URL,
       showMore: true
     };
   },
@@ -99,47 +103,6 @@ export default {
       .empty {
         font-size: 12px;
         text-align: center;
-      }
-
-      .people-item {
-        display: flex;
-        align-items: center;
-        button {
-          flex: 0 0 32px;
-          cursor: pointer;
-        }
-
-        .input-name {
-          border: 0;
-          border-bottom: 1px solid #ccc;
-          flex-grow: 1;
-          margin-right: 12px;
-          padding: 8px 0;
-        }
-
-        .input-taste {
-          flex: 0 0 48px;
-          cursor: pointer;
-          margin-right: 8px;
-        }
-
-        .input-pay {
-          display: block;
-          margin: 0;
-          margin-right: 6px;
-          height: 32px;
-          flex: 0 0 32px;
-          border: 1px solid #ccc;
-          cursor: pointer;
-          border-radius: 2px;
-
-          &.pedido {
-            background-color: #efd83e;
-          }
-          &.entregado {
-            background-color: #6fbe6d;
-          }
-        }
       }
     }
 

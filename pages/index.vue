@@ -2,11 +2,14 @@
   ul.ice-cream-list
     li(class="ice-cream-item" v-for="item in iceCreamListF" :key="item.id")
       .container-img
-        .aspect-ratio.aspect-ratio-1by1
+        .aspect-ratio.aspect-ratio-61by81
           img.aspect-ratio-item(:src="BASE_URL + item.img")
       
       .content
         h3 {{ item.name }}
+        p
+          span ${{ item.price }}
+          span(v-if="item.promo")   - ({{ item.promo.personLength }} * ${{ item.promo.price }})
 
       .actions
         button(v-show="!item.isExist" @click="ADD_TO_CART(item)") Agregar hela2
@@ -18,6 +21,8 @@
 import { mapMutations, mapState } from "vuex";
 
 export default {
+  name: "HomePage",
+
   data() {
     return {
       BASE_URL: process.env.BASE_URL,
@@ -28,17 +33,40 @@ export default {
           img: "/images/mc_flurry_oreo.png",
           showCreamList: false,
           price: 135,
-          promo: 190,
+          promo: null,
           people: [],
           isExist: false
         },
         {
           id: 2,
+          name: "Mc Flurry - Kit kat",
+          img: "/images/mc_flurry_kit_kat.png",
+          showCreamList: false,
+          price: 135,
+          promo: null,
+          people: [],
+          isExist: false
+        },
+        {
+          id: 3,
+          name: "Mc Flurry - MM",
+          img: "/images/mc_flurry_mms.png",
+          showCreamList: false,
+          price: 150,
+          promo: null,
+          people: [],
+          isExist: false
+        },
+        {
+          id: 4,
           name: "Sundae",
           img: "/images/sundae.png",
           showCreamList: false,
-          price: 105,
-          promo: 105,
+          price: 110,
+          promo: {
+            personLength: 2,
+            price: 110
+          },
           people: [],
           isExist: false
         }
@@ -60,7 +88,7 @@ export default {
     iceCreamListF() {
       return this.iceCreamList.map(iceCream => ({
         ...iceCream,
-        isExist: this.cart.some(product => product.id == iceCream.id)
+        isExist: this.cart.some(({ id }) => id == iceCream.id)
       }));
     }
   }
@@ -88,11 +116,24 @@ export default {
     }
 
     .content {
+      text-align: center;
       h3 {
         font-size: 14px;
+        line-height: 14px;
         letter-spacing: 0;
         text-align: center;
+        margin: 4px;
+      }
+
+      p {
+        font-size: 10px;
+        letter-spacing: 0;
         margin-bottom: 8px;
+
+        span {
+          font-size: 10px;
+          letter-spacing: 0;
+        }
       }
     }
 
