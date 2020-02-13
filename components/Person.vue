@@ -1,14 +1,14 @@
 <template lang="pug">
   .person-item()
-    button.delete-people(@click="$emit('deletePerson', { personId: person.id })") x
+    button.delete-people(@click="$emit('deletePerson')") x
     
-    .input-taste(@click="$emit('changeTasteSelected', { personId: person.id })")
+    .input-taste(v-if="hasChangeStatus" @click="$emit('changeTasteSelected')")
       .aspect-ratio.aspect-ratio-1by1()
         img.aspect-ratio-item(:src="BASE_URL + tasteList[person.tasteId].img")
     
-    input.input-name(:value="person.name" @input="(event) => $emit('changeName', { value: event.target.value, personId: person.id })")
+    input.input-name(:value="person.name" @input="changeName")
     
-    .input-pay(@click="$emit('changeStatus', { personId: person.id }) " :class="[person.status]")
+    .input-pay(@click="$emit('changeStatus') " :class="[person.status]")
 
 </template>
 
@@ -20,6 +20,11 @@ export default {
     person: {
       type: Object,
       required: true
+    },
+
+    hasChangeStatus: {
+      type: Boolean,
+      default: true
     }
   },
 
@@ -31,6 +36,12 @@ export default {
 
   computed: {
     ...mapState(["tasteList"])
+  },
+
+  methods: {
+    changeName(event) {
+      this.$emit("changeName", { value: event.target.value });
+    }
   }
 };
 </script>
@@ -39,6 +50,13 @@ export default {
 .person-item {
   display: flex;
   align-items: center;
+  background: white;
+  padding: 4px 0;
+  margin-bottom: 2px;
+
+  &:last-of-type {
+    margin-bottom: 24px;
+  }
 
   button {
     flex: 0 0 32px;

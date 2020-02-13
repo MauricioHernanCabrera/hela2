@@ -35,6 +35,7 @@ export default {
           price: 135,
           promo: null,
           people: [],
+          type: "taste",
           isExist: false
         },
         {
@@ -45,6 +46,7 @@ export default {
           price: 135,
           promo: null,
           people: [],
+          type: "taste",
           isExist: false
         },
         {
@@ -55,6 +57,7 @@ export default {
           price: 150,
           promo: null,
           people: [],
+          type: "taste",
           isExist: false
         },
         {
@@ -68,6 +71,29 @@ export default {
             price: 110
           },
           people: [],
+          type: "taste",
+          isExist: false
+        },
+        {
+          id: 5,
+          name: "Tiramisú",
+          img: "/images/tiramisu.png",
+          showCreamList: false,
+          price: 185,
+          promo: null,
+          people: [],
+          type: "basic",
+          isExist: false
+        },
+        {
+          id: 6,
+          name: "Banana Cold Cake",
+          img: "/images/banana_cold_cake.jpg",
+          showCreamList: false,
+          price: 185,
+          promo: null,
+          people: [],
+          type: "basic",
           isExist: false
         }
       ]

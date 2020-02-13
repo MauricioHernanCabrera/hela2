@@ -11,34 +11,39 @@
           .right
             h2 {{ item.name }}
             p 
-              | {{ item.people.length }} helado (s)
+              | {{ item.people.length }} persona (s)
               span(v-if="item.promo")  - {{ Math.floor(item.people.length / item.promo.personLength) }} promo (s)
 
-            button(@click="deleteProduct({ indexProduct })") x
+        button.delete-product(@click="deleteProduct({ indexProduct })") x
         
         .content(v-show="item.showCreamList")
-          .cream-list
+          .cream-list(v-if="item.type == 'taste'")
             h2-cream(
-              :cream="creamList[0]"
-              :indexProduct="indexProduct"
-              :people="item.people.filter((person) => person.creamId == 1)"
-              @deletePerson="deletePerson"
-              @changeTasteSelected="changeTasteSelected"
-              @changeStatus="changeStatus"
-              @addPerson="addPerson"
-              @changeName="changeName"
+              v-for="cream in creamList"
+              :key="cream.id"
+              :cream="cream"
+              :people="item.people.filter((person) => person.creamId == cream.id)"
+              @deletePerson="(props) => deletePerson({ ...props, indexProduct })"
+              @changeTasteSelected="(props) => changeTasteSelected({ ...props, indexProduct })"
+              @changeStatus="(props) => changeStatus({ ...props, indexProduct }) "
+              @addPerson="(props) => addPerson({ ...props, indexProduct }) "
+              @changeName="(props) => changeName({ ...props, indexProduct }) "
+            )
+          
+          h2-person-list(v-else-if="item.type == 'basic'" @addPerson="addPerson({ indexProduct })")
+            h2-person(
+              v-for="person in item.people" :key="person.id"
+              @deletePerson="deletePerson({ indexProduct, personId: person.id })"
+              @changeTasteSelected="changeTasteSelected({ indexProduct, personId: person.id })"
+              @changeStatus="changeStatus({ indexProduct, personId: person.id })"
+              @changeName="(props) => changeName({ ...props, indexProduct, personId: person.id })"
+              :person="person"
+              :hasChangeStatus="false"
             )
 
-            h2-cream(
-              :cream="creamList[1]"
-              :indexProduct="indexProduct"
-              :people="item.people.filter((person) => person.creamId == 2)"
-              @deletePerson="deletePerson"
-              @changeTasteSelected="changeTasteSelected"
-              @changeStatus="changeStatus"
-              @addPerson="addPerson"
-            )
-    
+          div(v-else)
+            |Por favor limpie su carrito
+            nuxt-link(to="/clean") aqui
     
     footer
       span.total Total: 
@@ -63,12 +68,15 @@
 <script>
 import { mapMutations, mapState } from "vuex";
 import H2Cream from "@/components/Cream.vue";
-
+import H2Person from "@/components/Person";
+import H2PersonList from "@/components/PersonList";
 export default {
   name: "CartPage",
 
   components: {
-    H2Cream
+    H2Cream,
+    H2Person,
+    H2PersonList
   },
 
   data() {
@@ -80,12 +88,12 @@ export default {
       creamList: [
         {
           id: 1,
-          name: "Dulce de leche",
+          name: "Vainilla",
           showPeople: false
         },
         {
           id: 2,
-          name: "Vainilla",
+          name: "Dulce de leche",
           showPeople: false
         }
       ],
@@ -116,12 +124,12 @@ export default {
     ...mapMutations(["SET_TITLE"]),
     ...mapMutations("cart", ["SET_CART"]),
 
-    addPerson({ indexProduct, creamId }) {
+    addPerson({ indexProduct, creamId = null }) {
       this.cart[indexProduct].people.push({
         name: "",
         active: false,
         creamId,
-        tasteId: 1,
+        tasteId: 0,
         status: "nada", // [nada, pedido, entregado]
         id: Date.now()
       });
@@ -164,7 +172,9 @@ export default {
       };
     },
 
-    changeStatus({ indexProduct, personId }) {
+    changeStatus(props) {
+      const { indexProduct, personId } = props;
+
       const indexPerson = this.getIndexPerson({ indexProduct, personId });
 
       const { status } = this.cart[indexProduct].people[indexPerson];
@@ -189,12 +199,9 @@ export default {
     },
 
     changeName({ indexProduct, personId, value }) {
-      console.log({ indexProduct, personId, value });
       const indexPerson = this.getIndexPerson({ indexProduct, personId });
 
-      const { status } = (this.cart[indexProduct].people[
-        indexPerson
-      ].name = value);
+      this.cart[indexProduct].people[indexPerson].name = value;
     },
 
     deleteProduct({ indexProduct }) {
@@ -289,14 +296,6 @@ export default {
           font-size: 10px;
           margin: 0;
         }
-
-        button {
-          position: absolute;
-          top: 4px;
-          right: 4px;
-          padding: 4px;
-          cursor: pointer;
-        }
       }
     }
 
@@ -308,6 +307,14 @@ export default {
         gap: 8px;
       }
     }
+  }
+  .delete-product {
+    position: absolute;
+    top: 0;
+    right: 0px;
+    cursor: pointer;
+    padding: 8px;
+    /* border: 2px solid red; */
   }
 }
 
