@@ -43,7 +43,7 @@ export default {
           name: "Mc Flurry - Kit kat",
           img: "/images/mc_flurry_kit_kat.png",
           showCreamList: false,
-          price: 135,
+          price: 150,
           promo: null,
           people: [],
           type: "taste",
