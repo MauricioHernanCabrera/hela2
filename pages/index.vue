@@ -33,7 +33,10 @@ export default {
           img: "/images/mc_flurry_oreo.png",
           showCreamList: false,
           price: 135,
-          promo: null,
+          promo: {
+            personLength: 2,
+            price: 190
+          },
           people: [],
           type: "taste",
           isExist: false
